@@ -99,7 +99,7 @@ if(compositeBlueprints.length === 1) {
 	
 	// Update blueprint
 	blueprintService.createOrUpdateBlueprint(serviceBlueprintToUpdate);
-	System.log("Publish composite blueprint with name '" + serviceBlueprintToUpdate.name + "'");
+	System.log("Update composite blueprint with name '" + serviceBlueprintToUpdate.name + "' successfull");
 } else if(compositeBlueprints.length > 1) {
 	var errorMsg = "More than one composite blueprint with name '" + blueprintNameInput + "' found! Can't manage it.";
 	for each(var blueprint in compositeBlueprints) {
