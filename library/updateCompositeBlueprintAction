@@ -108,5 +108,5 @@ if(compositeBlueprints.length === 1) {
 	System.error(errorMsg);
 	throw errorMsg;
 } else {
-	System.warn("No composite blueprint to publish with name '" + blueprintNameInput + "'");
+	System.warn("No composite blueprint to update with name '" + blueprintNameInput + "'");
 }
