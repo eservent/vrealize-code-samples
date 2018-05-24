@@ -1,0 +1,112 @@
+// Inputs for update Blueprint
+var blueprintNameInput = "BP-IAAS";
+
+var archiveDaysInput = 90;
+var maxNumberOfInstancesInput = 1;
+var leaseDaysMinValueInput = 1;
+var leaseDaysMaxValueInput = 45;
+
+var globalPropertiesToUpdateInput = [
+		{name: "prop1", value: "value1", encrypted: false, readOnly: false,	visibility: true},
+		{name: "prop2", value: "value2", encrypted: false, readOnly: false,	visibility: true}
+];
+
+var vSpherePropertiesToUpdateInput = [
+		{name: "propVSphere1", value: "propVSphere1", encrypted: false, readOnly: false,	visibility: true},
+		{name: "propVSphere2", value: "propVSphere2", encrypted: false, readOnly: false,	visibility: true}
+];
+
+var vSpherePropertyGroupsToUpdateInput = ["Event Subscription Properties Group"];
+
+// Global vars
+var vcaccafeHost = Server.findAllForType("vCACCAFE:VCACHost")[0];
+var blueprintService = vcaccafeHost.createCompositionClient().getCompositionCompositeBlueprintService();
+
+// Retrieve Id of Property Groups
+var vSpherePropertyGroupsIds = [];
+var propertyGroups = vCACCAFEEntitiesFinder.getPropertyGroups(vcaccafeHost);
+for each(var propertyGroup in propertyGroups) {
+	var propertyGroupName = propertyGroup.getName();
+	var propertyGroupId = propertyGroup.getId();
+	for each(var name in vSpherePropertyGroupsToUpdateInput) {
+		if(name.toLowerCase() == propertyGroupName.toLowerCase()) {
+			System.debug("Add Property Group " + propertyGroup.getName());
+			vSpherePropertyGroupsIds.push(propertyGroupId);
+			break;
+		}
+	}
+}
+
+// Search Composite Blueprint
+var filter = new Array();
+filter[0] = vCACCAFEFilterParam.equal("name", vCACCAFEFilterParam.string(blueprintNameInput));
+		
+var odataQuery = vCACCAFEOdataQuery.query().addFilter(filter);
+var pageOdataRequest = new vCACCAFEPageOdataRequest(odataQuery) ;
+
+var compositeBlueprints = blueprintService.getBlueprints(pageOdataRequest).getContent();
+if(compositeBlueprints.length === 1) {
+	var serviceBlueprintToUpdate = blueprintService.getBlueprint(compositeBlueprints[0].id);
+	
+	// Update Properties
+	var blueprintProps = serviceBlueprintToUpdate.getProperties();
+	
+	if(archiveDaysInput !== null) {
+		blueprintProps._archiveDays = new vCACCAFEComponentFieldValue()
+		blueprintProps._archiveDays.addFacetValue("defaultValue", vCACCAFEUnspecifiedEvaluator.fromInt(archiveDaysInput))
+	}
+	
+	if(maxNumberOfInstancesInput !== null) {
+		blueprintProps._number_of_instances = new vCACCAFEComponentFieldValue()
+		blueprintProps._number_of_instances.addFacetValue("maxValue", vCACCAFEUnspecifiedEvaluator.fromInt(maxNumberOfInstancesInput))
+	}
+	
+	if(leaseDaysMinValueInput !== null && leaseDaysMaxValueInput !== null) {
+		blueprintProps._leaseDays = new vCACCAFEComponentFieldValue()
+		blueprintProps._leaseDays.addFacetValue("minValue", vCACCAFEUnspecifiedEvaluator.fromInt(leaseDaysMinValueInput))
+		blueprintProps._leaseDays.addFacetValue("maxValue", vCACCAFEUnspecifiedEvaluator.fromInt(leaseDaysMaxValueInput))
+		blueprintProps._leaseDays.addFacetValue("defaultValue", vCACCAFEUnspecifiedEvaluator.fromInt(leaseDaysMinValueInput))
+	}
+	
+	for each(var prop in globalPropertiesToUpdateInput) {
+		var customPropertyData = new vCACCAFEComponentFieldValue();
+		customPropertyData.addFacetValue("defaultValue", vCACCAFEConstantValue.fromString(prop.value));
+		customPropertyData.addFacetValue("encrypted", vCACCAFEConstantValue.fromBoolean(prop.encrypted));
+		customPropertyData.addFacetValue("readOnly", vCACCAFEConstantValue.fromBoolean(prop.readOnly));
+		customPropertyData.addFacetValue("visibility", vCACCAFEConstantValue.fromBoolean(prop.visibility));
+		blueprintProps[prop.name] = customPropertyData;
+	}
+	serviceBlueprintToUpdate.setProperties(blueprintProps);
+	
+	// Update Components
+	var components = serviceBlueprintToUpdate.getComponents();
+	for each(key in components.keys){  
+	    var component = components.get(key);   // Type : vCACCAFEComponentDeclaration
+		if(component.type == "Infrastructure.CatalogItem.Machine.Virtual.vSphere") {  
+			var customPropertyData = new vCACCAFEComponentFieldValue();
+			for each(var prop in vSpherePropertiesToUpdateInput) {
+				var customPropertyData = new vCACCAFEComponentFieldValue();
+				customPropertyData.addFacetValue("defaultValue", vCACCAFEConstantValue.fromString(prop.value));
+				customPropertyData.addFacetValue("encrypted", vCACCAFEConstantValue.fromBoolean(prop.encrypted));
+				customPropertyData.addFacetValue("readOnly", vCACCAFEConstantValue.fromBoolean(prop.readOnly));
+				customPropertyData.addFacetValue("visibility", vCACCAFEConstantValue.fromBoolean(prop.visibility));
+				component.addComponentFieldValue(prop.name, customPropertyData);
+			}
+			
+			component.setPropertyGroups(vSpherePropertyGroupsIds);
+		}  
+	}
+	
+	// Update blueprint
+	blueprintService.createOrUpdateBlueprint(serviceBlueprintToUpdate);
+	System.log("Publish composite blueprint with name '" + serviceBlueprintToUpdate.name + "'");
+} else if(compositeBlueprints.length > 1) {
+	var errorMsg = "More than one composite blueprint with name '" + blueprintNameInput + "' found! Can't manage it.";
+	for each(var blueprint in compositeBlueprints) {
+		System.error("Found composite blueprint with name '" + blueprint.getName() + "'");
+	}
+	System.error(errorMsg);
+	throw errorMsg;
+} else {
+	System.warn("No composite blueprint to publish with name '" + blueprintNameInput + "'");
+}
