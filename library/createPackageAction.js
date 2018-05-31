@@ -1,6 +1,6 @@
 /**
  * Goal :
- * This action create a VRO package with all elements needed.
+ * This action creates a VRO package with all elements needed.
  * It could be helpful when you need to export daily your work and version it under git for instance.
  *
  * Sample :
