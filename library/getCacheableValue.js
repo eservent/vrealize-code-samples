@@ -1,7 +1,8 @@
 /**
  * Goal :
  * This action allows to put in cache all results of others actions.
- * It could be helpful when you use VRA and its forms that take too long to build (Error : "Failed to retrieve form from provider").
+ * It could be helpful when you use VRA and its forms that take too long to build (Error : "Failed to retrieve form from provider"), 
+ * or when you want to retrieve attribute value in Configuration Element.
  *
  * Pre-requisite : DynamicTypes Plugin installed (current use version : 1.3.0)
  * 
