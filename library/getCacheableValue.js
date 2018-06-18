@@ -26,12 +26,12 @@
  * Output Parameters : Any
  *
  * Script in Workflow use:
- * // This action is fr.numaneao.formactions.mycatalog.getZones()
+ * // This action is fr.numaneo.formactions.mycatalog.getZones()
  * ////////////////////////////////////////
- * var moduleName = "fr.numaneao.formactions.mycatalog"; // Module of the current action
+ * var moduleName = "fr.numaneo.formactions.mycatalog"; // Module of the current action
  * var actionName = "getZones"; // Name of the current action
  * if(arguments[arguments.length -1] !== "__CACHE_OFF__") {
- *	return System.getModule("fr.numaneao").getCacheableValue(moduleName, actionName, false, arguments); // Call cache each time
+ *	return System.getModule("fr.numaneo").getCacheableValue(moduleName, actionName, false, arguments); // Call cache each time
  * }
  * ////////////////////////////////////////
  *
